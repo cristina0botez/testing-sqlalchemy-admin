@@ -2,13 +2,10 @@ from sqlalchemy import Column, Integer, String, create_engine, Table, ForeignKey
 from sqlalchemy.orm import declarative_base, relationship, sessionmaker
 from sqlalchemy_utils.types.password import PasswordType
 
+from example.dbsetup import 
+
 
 Base = declarative_base()
-engine = create_engine(
-    'sqlite:///example.db',
-    connect_args={'check_same_thread': False},
-)
-Session = sessionmaker(engine)
 
 
 class User(Base):
@@ -63,6 +60,3 @@ class Movie(Base):
     director_id = Column(Integer, ForeignKey('directors.id'), nullable=False)
     director = relationship('Director', back_populates='movies')
     actors = relationship('Actor', secondary=movies_actors, back_populates='movies')
-
-
-Base.metadata.create_all(engine)
