@@ -18,8 +18,8 @@ class User(Base):
     username = Column(String, nullable=False, unique=True)
     password = Column(PasswordType(schemes=['pbkdf2_sha512']))
     is_admin = Column(Boolean, nullable=False, default=False)
-    last_login = Column(DateTime)
-    session_token = Column(String, unique=True)
+    last_login = Column(DateTime, nullable=True)
+    session_token = Column(String, nullable=True, unique=True)
 
 
 class Person(Base):
@@ -27,7 +27,10 @@ class Person(Base):
 
     id = Column(Integer, primary_key=True)
     name = Column(String, nullable=False)
-    nickname = Column(String)
+    age = Column(Integer)
+
+    def __str__(self):
+        return f'{self.name}'
 
 
 class Director(Base):
@@ -35,7 +38,11 @@ class Director(Base):
 
     id = Column(Integer, primary_key=True)
     person_id = Column(Integer, ForeignKey('person.id'), nullable=False)
-    movies = relationship('Movie', back_populates='director')
+    person = relationship('Person', lazy='joined')
+    movies = relationship('Movie', back_populates='director', lazy='subquery')
+
+    def __str__(self):
+        return f'{self.person.name} <D>'
 
 
 movies_actors = Table(
@@ -51,7 +58,11 @@ class Actor(Base):
 
     id = Column(Integer, primary_key=True)
     person_id = Column(Integer, ForeignKey('person.id'), nullable=False)
-    movies = relationship('Movie', secondary=movies_actors, back_populates='actors')
+    person = relationship('Person', lazy='joined')
+    movies = relationship('Movie', secondary=movies_actors, back_populates='actors', lazy='subquery')
+
+    def __str__(self):
+        return f'{self.person.name} <A>'
 
 
 class Movie(Base):
@@ -59,10 +70,14 @@ class Movie(Base):
 
     id = Column(Integer, primary_key=True)
     title = Column(String, nullable=False)
+    year = Column(Integer, nullable=False)
     rating = Column(Integer, nullable=True)
     director_id = Column(Integer, ForeignKey('directors.id'), nullable=False)
-    director = relationship('Director', back_populates='movies')
-    actors = relationship('Actor', secondary=movies_actors, back_populates='movies')
+    director = relationship('Director', back_populates='movies', lazy='subquery')
+    actors = relationship('Actor', secondary=movies_actors, back_populates='movies', lazy='subquery')
+
+    def __str__(self):
+        return f'"{self.title}" ({self.year})'
 
 
 Base.metadata.create_all(engine)
